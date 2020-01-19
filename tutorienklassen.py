@@ -59,7 +59,7 @@ class SDFUpdater(Updater):
     kalman_gain = None  # messkovarianz
     Pxy = None
 
-    @lru_cache
+    @lru_cache()
     def get_measurement_prediction(self, state_prediction, measurement_model=None, **kwargs):
         measurement_matrix = measurement_model.matrix()
         measurement_noise_covar = measurement_model.covar()
@@ -75,9 +75,10 @@ class SDFUpdater(Updater):
                                              self.Pxy)
 
     def update(self, hypothesis, measurementmodel, **kwargs):
+        test = self.get_measurement_prediction(hypothesis.prediction, measurementmodel)     # damit messprediction, kamalngain etc berechnet werden
         K = self.Pxy @ np.linalg.pinv(self.kalman_gain)
-        x_post = self.messprediction + K @ (hypothesis.measurement.state_vector - hypothesis.prediction.mean)
-        P_post = self.kalman_gain - K @ self.Pxy.T
+        x_post = self.messprediction + K @ (hypothesis.measurement.state_vector - hypothesis.prediction.mean)   # K @ (hypo..- ..) Dimensionen passen nicht
+        P_post = self.kalman_gain - K @ self.Pxy.T  # Dimensionen passen nicht
         P_post = (P_post + P_post.T) / 2
 
         posterior_mean = x_post
