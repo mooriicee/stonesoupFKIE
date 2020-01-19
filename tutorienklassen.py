@@ -33,15 +33,16 @@ class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
 class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
 
     def matrix(self, time_interval, **kwargs):
-        delta_t = time_interval.total_seconds()
+        delta_t = int(time_interval.total_seconds())
         return sp.array([[1, delta_t], [0, 1]])
 
     def covar(self, time_interval, **kwargs):
+        time_interval_sec = int(time_interval.total_seconds())
         Sigma = 5.0
 
-        covar = sp.array([[sp.power(time_interval, 4) / 4,
-                           sp.power(time_interval, 3) / 2],
-                          [sp.power(time_interval, 3) / 2,
-                           sp.power(time_interval, 2)]]) * Sigma
+        covar = sp.array([[sp.power(time_interval_sec, 4) / 4,
+                           sp.power(time_interval_sec, 3) / 2],
+                          [sp.power(time_interval_sec, 3) / 2,
+                           sp.power(time_interval_sec, 2)]]) * sp.power(Sigma, 2)
 
         return CovarianceMatrix(covar)
