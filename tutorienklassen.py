@@ -77,7 +77,7 @@ class SDFUpdater(Updater):
     def update(self, hypothesis, measurementmodel, **kwargs):
         test = self.get_measurement_prediction(hypothesis.prediction, measurementmodel)     # damit messprediction, kamalngain etc berechnet werden
         K = self.Pxy @ np.linalg.pinv(self.kalman_gain)
-        x_post = self.messprediction + K @ (hypothesis.measurement.state_vector - hypothesis.prediction.mean)   # K @ (hypo..- ..) Dimensionen passen nicht
+        x_post = hypothesis.prediction.mean + K @ (hypothesis.measurement.state_vector - self.messprediction)   # K @ (hypo..- ..) Dimensionen passen nicht
         P_post = self.kalman_gain - K @ self.Pxy.T  # Dimensionen passen nicht
         P_post = (P_post + P_post.T) / 2
 
