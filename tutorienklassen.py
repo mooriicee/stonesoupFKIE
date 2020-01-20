@@ -11,6 +11,10 @@ from stonesoup.types.hypothesis import SingleHypothesis
 from stonesoup.types.prediction import GaussianMeasurementPrediction
 from stonesoup.types.update import GaussianStateUpdate
 from stonesoup.updater import Updater
+from stonesoup.predictor import Predictor
+from stonesoup.types.prediction import GaussianStatePrediction
+from stonesoup.types.state import State
+
 
 
 class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
@@ -53,6 +57,61 @@ class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
 
         return CovarianceMatrix(covar)
 
+
+class SdfKalmanPredictor(Predictor):
+    @lru_cache()
+    def predict(self, prior, control_input=None, timestamp=None, **kwargs):
+
+        # Compute time_interval
+        try:
+            time_interval = timestamp - prior.timestamp
+        except TypeError:
+            # TypeError: (timestamp or prior.timestamp) is None
+            time_interval = None
+
+        # Transition model parameters
+        transition_matrix = self.transition_model.matrix(
+            timestamp=timestamp,
+            time_interval=time_interval,
+            **kwargs)
+        transition_noise_covar = self.transition_model.covar(
+            timestamp=timestamp,
+            time_interval=time_interval,
+            **kwargs)
+
+        # Control model parameters
+        if self.control_model is None:
+            control_matrix = np.zeros(prior.covar.shape)
+            contol_noise_covar = np.zeros(prior.covar.shape)
+            control_input = State(np.zeros(prior.state_vector.shape))
+        else:
+            # Extract control matrix
+            control_matrix = self.control_model.matrix(
+                timestamp=timestamp,
+                time_interval=time_interval,
+                **kwargs)
+            # Extract control noise covariance
+            try:
+                # covar() is implemented for control_model
+                control_noise_covar = self.control_model.covar(
+                    timestamp=timestamp,
+                    time_interval=time_interval,
+                    **kwargs)
+            except AttributeError:
+                # covar() is NOT implemented for control_model
+                contol_noise_covar = np.zeros(self.control_model.ndim_ctrl)
+            if control_input is None:
+                control_input = np.zeros((self.control_model.ndim_ctrl, 1))
+
+        # Perform prediction
+        prediction_mean, prediction_covar = self.predict_lowlevel(
+            prior.mean, prior.covar, transition_matrix,
+            transition_noise_covar, control_input.state_vector,
+            control_matrix, contol_noise_covar)
+
+        return GaussianStatePrediction(prediction_mean,
+                                       prediction_covar,
+                                       timestamp)
 
 class SDFUpdater(Updater):
     messprediction = None  # mess-mean
