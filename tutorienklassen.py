@@ -116,37 +116,37 @@ class SdfKalmanPredictor(Predictor):
 
 class SDFUpdater(Updater):
     messprediction = None  # mess-mean
-    kalman_gain = None  # messkovarianz
+    S = None  # messkovarianz
     Pxy = None
 
     @lru_cache()
-    def get_measurement_prediction(self, state_prediction, measurement_model=None, **kwargs):
+    def get_measurement_prediction(self, state_prediction, measurement_model=SDFMessmodell(4, (0, 2), np.array([[0.75, 0], [0, 0.75]])), **kwargs):
         measurement_matrix = measurement_model.matrix()
         measurement_noise_covar = measurement_model.covar()
         state_prediction_mean = state_prediction.mean
         state_prediction_covar = state_prediction.covar
 
         self.messprediction = measurement_matrix @ state_prediction_mean
-        self.kalman_gain = measurement_matrix @ state_prediction_covar @ measurement_matrix.T + measurement_noise_covar
+        self.S = measurement_matrix @ state_prediction_covar @ measurement_matrix.T + measurement_noise_covar
         self.Pxy = state_prediction_covar @ measurement_matrix.T
 
-        return GaussianMeasurementPrediction(self.messprediction, self.kalman_gain,
+        return GaussianMeasurementPrediction(self.messprediction, self.S,
                                              state_prediction.timestamp,
                                              self.Pxy)
 
     def update(self, hypothesis, measurementmodel, **kwargs):
         test = self.get_measurement_prediction(hypothesis.prediction, measurementmodel)     # damit messprediction, kamalngain etc berechnet werden
-        K = self.Pxy @ np.linalg.pinv(self.kalman_gain)
-        x_post = hypothesis.prediction.mean + K @ (hypothesis.measurement.state_vector - self.messprediction)   # K @ (hypo..- ..) Dimensionen passen nicht
-        P_post = self.kalman_gain - K @ self.Pxy.T  # Dimensionen passen nicht
-        P_post = (P_post + P_post.T) / 2
+        W = self.Pxy @ np.linalg.pinv(self.S)
+        x_post = hypothesis.prediction.mean + W @ (hypothesis.measurement.state_vector - self.messprediction)
+        P_post = hypothesis.prediction.covar - (W @ self.S @ W.T)  # Dimensionen passen nicht
+        # P_post = (P_post + P_post.T) / 2
 
         posterior_mean = x_post
         posterior_covar = P_post
         meas_pred_mean = self.messprediction
-        meas_pred_covar = self.kalman_gain
+        meas_pred_covar = self.S
         cross_covar = self.Pxy
-        _ = K
+        _ = W
 
         # Augment hypothesis with measurement prediction
         hypothesis = SingleHypothesis(hypothesis.prediction,
