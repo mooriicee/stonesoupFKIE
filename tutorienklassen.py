@@ -16,7 +16,6 @@ from stonesoup.types.prediction import GaussianStatePrediction
 from stonesoup.types.state import State
 
 
-
 class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
     noise_covar = Property(CovarianceMatrix, doc="Noise covariance")
 
@@ -40,7 +39,6 @@ class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
         return model_matrix
 
 
-
 class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
 
     def matrix(self, time_interval, **kwargs):
@@ -62,17 +60,18 @@ class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
 class SdfKalmanPredictor(Predictor):
     @lru_cache()
     def predict(self, prior, control_input=None, timestamp=None, **kwargs):
+        time_interval = timestamp - prior.timestamp
+        if timestamp is None : time_interval = None
+
         # Transition model parameters
-        transition_matrix = self.transition_model.matrix
-        transition_noise_covar = self.transition_model.covar
+        transition_matrix = self.transition_model.matrix(timestamp=timestamp, time_interval=time_interval, **kwargs)
+        transition_noise_covar = self.transition_model.covar(timestamp=timestamp, time_interval=time_interval, **kwargs)
 
         # Perform prediction
         prediction_mean = transition_matrix @ prior.mean
         prediction_covar = transition_matrix @ prior.covar @ transition_matrix + transition_noise_covar
 
-        return GaussianStatePrediction(prediction_mean,
-                                       prediction_covar,
-                                       timestamp)
+        return GaussianStatePrediction(prediction_mean, prediction_covar, timestamp)
 
 
 class SDFUpdater(Updater):
@@ -96,7 +95,7 @@ class SDFUpdater(Updater):
                                              self.Pxy)
 
     def update(self, hypothesis, measurementmodel, **kwargs):
-        test = self.get_measurement_prediction(hypothesis.prediction, measurementmodel)     # damit messprediction, kamalngain etc berechnet werden
+        test = self.get_measurement_prediction(hypothesis.prediction, measurementmodel)  # damit messprediction, kamalngain etc berechnet werden
         W = self.Pxy @ np.linalg.pinv(self.S)
         x_post = hypothesis.prediction.mean + W @ (hypothesis.measurement.state_vector - self.messprediction)
         P_post = hypothesis.prediction.covar - (W @ self.S @ W.T)  # Dimensionen passen nicht
