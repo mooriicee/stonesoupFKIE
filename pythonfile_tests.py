@@ -68,8 +68,8 @@ from tutorienklassen import SDFMessmodell
 measurement_model = SDFMessmodell(
     4,  # Number of state dimensions (position and velocity in 2D)
     (0, 2),  # Mapping measurement vector index to state index
-    np.array([[0.75, 0],  # Covariance matrix for Gaussian PDF
-              [0, 0.75]])
+    np.array([[np.power(50, 2), 0],  # Covariance matrix for Gaussian PDF
+              [0, np.power(50, 2)]])
 )
 
 measurement_model.matrix()
@@ -112,9 +112,11 @@ for state in track:
     max_ind = np.argmax(v[0, :])
     orient = np.arctan2(v[max_ind, 1], v[max_ind, 0])
     ellipse = Ellipse(xy=state.state_vector[(0, 2), 0],
-                      width=np.sqrt(w[0]) * 50, height=np.sqrt(w[1]) * 50,
+                      width=np.sqrt(w[0]) * 2, height=np.sqrt(w[1]) * 2,
                       angle=np.rad2deg(orient),
                       alpha=0.2)
     ax.add_artist(ellipse)
+
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=5)
 
 plt.show()

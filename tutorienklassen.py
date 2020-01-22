@@ -25,7 +25,6 @@ class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
         return 2
 
     def covar(self):
-        # return np.array((1, 0, 0, 0), (0, 0, 1, 0))
         return self.noise_covar
 
     def rvs(self):
