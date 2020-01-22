@@ -2,6 +2,7 @@ from functools import lru_cache
 
 import numpy as np
 import scipy as sp
+from scipy.linalg import block_diag
 from stonesoup.base import Property
 from stonesoup.models.base import LinearModel, GaussianModel, TimeVariantModel
 from stonesoup.models.measurement import MeasurementModel
@@ -41,14 +42,12 @@ class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
 
 class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
 
-    def matrix(self, **kwargs):
-        # delta_t = int(time_interval.total_seconds())
-        delta_t = 5
-        return sp.array([[1, delta_t], [0, 1]])
+    def matrix(self, timedelta=5, **kwargs):
+        delta_t = timedelta
+        return sp.array([[1, delta_t, 0, 0], [0, 1, 0, 0], [0, 0, 1, delta_t], [0, 0, 0, 1]])
 
-    def covar(self, **kwargs):
-        # delta_t = int(time_interval.total_seconds())
-        delta_t = 5
+    def covar(self, timedelta=5, **kwargs):
+        delta_t = timedelta
         Sigma = 5.0
 
         covar = sp.array([[sp.power(delta_t, 4) / 4,
@@ -56,16 +55,18 @@ class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
                           [sp.power(delta_t, 3) / 2,
                            sp.power(delta_t, 2)]]) * sp.power(Sigma, 2)
 
+        covar = block_diag(covar, covar)
+
         return CovarianceMatrix(covar)
 
 
 class SdfKalmanPredictor(Predictor):
     @lru_cache()
-    def predict(self, prior, control_input=None, **kwargs):
-        delta_t = 5
+    def predict(self, prior, timestamp=0, **kwargs):
+        delta_t = timestamp - prior.timestamp
         # Transition model parameters
-        transition_matrix = self.transition_model.matrix(time_interval=delta_t, **kwargs)
-        transition_noise_covar = self.transition_model.covar(time_interval=delta_t, **kwargs)
+        transition_matrix = self.transition_model.matrix(timedelta=delta_t, **kwargs)
+        transition_noise_covar = self.transition_model.covar(timedelta=delta_t, **kwargs)
 
         # Perform prediction
         prediction_mean = transition_matrix @ prior.mean
