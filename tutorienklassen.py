@@ -41,37 +41,37 @@ class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
 
 class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
 
-    def matrix(self, time_interval, **kwargs):
-        delta_t = int(time_interval.total_seconds())
+    def matrix(self, **kwargs):
+        # delta_t = int(time_interval.total_seconds())
+        delta_t = 5
         return sp.array([[1, delta_t], [0, 1]])
 
-    def covar(self, time_interval, **kwargs):
-        time_interval_sec = int(time_interval.total_seconds())
+    def covar(self, **kwargs):
+        # delta_t = int(time_interval.total_seconds())
+        delta_t = 5
         Sigma = 5.0
 
-        covar = sp.array([[sp.power(time_interval_sec, 4) / 4,
-                           sp.power(time_interval_sec, 3) / 2],
-                          [sp.power(time_interval_sec, 3) / 2,
-                           sp.power(time_interval_sec, 2)]]) * sp.power(Sigma, 2)
+        covar = sp.array([[sp.power(delta_t, 4) / 4,
+                           sp.power(delta_t, 3) / 2],
+                          [sp.power(delta_t, 3) / 2,
+                           sp.power(delta_t, 2)]]) * sp.power(Sigma, 2)
 
         return CovarianceMatrix(covar)
 
 
 class SdfKalmanPredictor(Predictor):
     @lru_cache()
-    def predict(self, prior, control_input=None, timestamp=None, **kwargs):
-        time_interval = timestamp - prior.timestamp
-        if timestamp is None : time_interval = None
-
+    def predict(self, prior, control_input=None, **kwargs):
+        delta_t = 5
         # Transition model parameters
-        transition_matrix = self.transition_model.matrix(timestamp=timestamp, time_interval=time_interval, **kwargs)
-        transition_noise_covar = self.transition_model.covar(timestamp=timestamp, time_interval=time_interval, **kwargs)
+        transition_matrix = self.transition_model.matrix(time_interval=delta_t, **kwargs)
+        transition_noise_covar = self.transition_model.covar(time_interval=delta_t, **kwargs)
 
         # Perform prediction
         prediction_mean = transition_matrix @ prior.mean
         prediction_covar = transition_matrix @ prior.covar @ transition_matrix + transition_noise_covar
 
-        return GaussianStatePrediction(prediction_mean, prediction_covar, timestamp)
+        return GaussianStatePrediction(prediction_mean, prediction_covar)
 
 
 class SDFUpdater(Updater):
