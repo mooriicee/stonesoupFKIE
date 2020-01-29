@@ -125,15 +125,16 @@ class SDFUpdater(Updater):
 
 def retrodict(state, prior_state, transition_model):
     F = transition_model.matrix()
+    D = transition_model.covar()
 
-    x_ll = prior_state.state_vector()
-    P_ll = prior_state.covar()
+    x_ll = prior_state.mean
+    P_ll = prior_state.covar
 
-    x_l1k = state.state_vector()
-    P_l1k = state.covar()
+    x_l1k = state.mean
+    P_l1k = state.covar
 
     x_l1l = F @ x_ll
-    P_l1l = F @ P_ll @ F.T + transition_model.covar()
+    P_l1l = F @ P_ll @ F.T + D
 
     W_l1l = P_ll @ F.T @ np.linalg.pinv(P_l1l)
 

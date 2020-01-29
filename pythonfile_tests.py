@@ -112,7 +112,7 @@ for state in track:
     ax.add_artist(ellipse)
 
 from tutorienklassen import retrodict
-test_state = retrodict(Track[-1], Track[-2], transition_model)
+test_state = retrodict(track[-1], track[-2], transition_model)
 print(test_state)
 
 plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=5)
