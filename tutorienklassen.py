@@ -1,4 +1,5 @@
 from functools import lru_cache
+from wave import Wave_write
 
 import numpy as np
 import scipy as sp
@@ -18,14 +19,14 @@ from stonesoup.types.state import State, GaussianState
 
 
 class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
-    noise_covar = Property(CovarianceMatrix, doc="Noise covariance")
 
     @property
     def ndim_meas(self):
         return 2
 
     def covar(self):
-        return self.noise_covar
+        cov = CovarianceMatrix([[np.power(50, 2), 0], [0, np.power(50, 2)]])
+        return cov
 
     def rvs(self):
         return 0.5
@@ -80,7 +81,7 @@ class SDFUpdater(Updater):
     Pxy = None
 
     @lru_cache()
-    def get_measurement_prediction(self, state_prediction, measurement_model=SDFMessmodell(4, (0, 2), np.array([[0.75, 0], [0, 0.75]])), **kwargs):
+    def get_measurement_prediction(self, state_prediction, measurement_model=SDFMessmodell(4, (0, 2)), **kwargs):
         measurement_matrix = measurement_model.matrix()
         measurement_noise_covar = measurement_model.covar()
         state_prediction_mean = state_prediction.mean
@@ -95,7 +96,7 @@ class SDFUpdater(Updater):
                                              self.Pxy)
 
     def update(self, hypothesis, measurementmodel, **kwargs):
-        test = self.get_measurement_prediction(hypothesis.prediction, measurementmodel)  # damit messprediction, kamalngain etc berechnet werden
+        test = self.get_measurement_prediction(hypothesis.prediction, measurementmodel)  # damit messprediction, kalmangain etc berechnet werden
         W = self.Pxy @ np.linalg.pinv(self.S)
         x_post = hypothesis.prediction.mean + W @ (hypothesis.measurement.state_vector - self.messprediction)
         P_post = hypothesis.prediction.covar - (W @ self.S @ W.T)  # Dimensionen passen nicht
@@ -123,22 +124,23 @@ class SDFUpdater(Updater):
                                    hypothesis.measurement.timestamp)
 
 
-def retrodict(state, prior_state, transition_model):
-    F = transition_model.matrix()
-    D = transition_model.covar()
+def retrodict(current_state, prior_state, transition_model):
+    delta_t = current_state.timestamp - prior_state.timestamp
+    F = transition_model.matrix(timedelta = delta_t)
+    D = transition_model.covar(timedelta = delta_t)
 
-    x_ll = prior_state.mean
+    x_ll = prior_state.mean     # Vorzustand (der verbessert wird)
     P_ll = prior_state.covar
 
-    x_l1k = state.mean
-    P_l1k = state.covar
+    x_l1k = current_state.mean  # momentaner Zustand
+    P_l1k = current_state.covar
 
-    x_l1l = F @ x_ll
-    P_l1l = F @ P_ll @ F.T + D
+    x_l1l = F @ x_ll    # predizierter Zustand
+    P_l1l = F @ P_ll @ np.transpose(F) + D
 
-    W_l1l = P_ll @ F.T @ np.linalg.pinv(P_l1l)
+    W_l1l = P_ll @ np.transpose(F) @ np.linalg.pinv(P_l1l)   # Gewichtsmatrix
 
-    x_lk = x_ll + W_l1l @ (x_l1k - x_l1l)
-    P_lk = P_ll + W_l1l @ (P_l1k - P_l1l) @ W_l1l.T
+    x_lk = x_ll + W_l1l @ (x_l1k - x_l1l)   # verbesserter Zustand
+    P_lk = P_ll + W_l1l @ (P_l1k - P_l1l) @ np.transpose(W_l1l)
 
-    return GaussianState(x_lk, P_lk, timestamp=state.timestamp)
+    return GaussianState(x_lk, P_lk, timestamp=prior_state.timestamp)

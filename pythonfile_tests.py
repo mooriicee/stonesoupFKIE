@@ -33,8 +33,8 @@ from stonesoup.types.detection import Detection
 measurements = []
 for state in truth:
     if state.timestamp % 5 == 0:
-        xOffset = 50 * np.random.normal(0, 1, 1)
-        yOffset = 50 * np.random.normal(0, 1, 1)
+        xOffset = 200 * np.random.normal(-1, 1, 1)
+        yOffset = 200 * np.random.normal(-1, 1, 1)
         x = state.state_vector[0, 0]
         y = state.state_vector[1, 0]
         measurements.append(Detection(
@@ -56,14 +56,11 @@ from tutorienklassen import SdfKalmanPredictor
 
 predictor = SdfKalmanPredictor(transition_model)
 
-
 from tutorienklassen import SDFMessmodell
 
 measurement_model = SDFMessmodell(
     4,  # Number of state dimensions (position and velocity in 2D)
     (0, 2),  # Mapping measurement vector index to state index
-    np.array([[np.power(50, 2), 0],  # Covariance matrix for Gaussian PDF
-              [0, np.power(50, 2)]])
 )
 
 measurement_model.matrix()
@@ -75,7 +72,7 @@ updater = SDFUpdater(measurement_model)
 
 from stonesoup.types.state import GaussianState
 
-prior = GaussianState([[0], [1], [0], [1]], np.diag([10.5, 0.5, 10.5, 0.5]), timestamp=0)
+prior = GaussianState([[0.0], [1.0], [0.0], [1.0]], np.diag([0.0, 0.0, 0.0, 0.0]), timestamp=0)
 
 from stonesoup.types.hypothesis import SingleHypothesis
 from stonesoup.types.track import Track
@@ -123,6 +120,16 @@ for i in range(len(track) - 1):
 ax.plot([state.state_vector[0, 0] for state in retrodiction_track],
         [state.state_vector[2, 0] for state in retrodiction_track],
         marker=".", color="brown")
+
+for state in retrodiction_track:
+    w, v = np.linalg.eig(measurement_model.matrix() @ state.covar @ measurement_model.matrix().T)
+    max_ind = np.argmax(v[0, :])
+    orient = np.arctan2(v[max_ind, 1], v[max_ind, 0])
+    ellipse = Ellipse(xy=state.state_vector[(0, 2), 0],
+                      width=np.sqrt(w[0]) * 2, height=np.sqrt(w[1]) * 2,
+                      angle=np.rad2deg(orient),
+                      alpha=0.2)
+    ax.add_artist(ellipse)
 
 plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=5)
 
