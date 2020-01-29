@@ -112,8 +112,17 @@ for state in track:
     ax.add_artist(ellipse)
 
 from tutorienklassen import retrodict
-test_state = retrodict(track[-1], track[-2], transition_model)
-print(test_state)
+
+retrodiction_track = Track()
+for i in range(len(track) - 1):
+    if i == 0:
+        retrodiction_track.append(retrodict(track[-i - 1], track[-i - 2], transition_model))
+    else:
+        retrodiction_track.append(retrodict(retrodiction_track[i - 1], track[-i - 2], transition_model))
+
+ax.plot([state.state_vector[0, 0] for state in retrodiction_track],
+        [state.state_vector[2, 0] for state in retrodiction_track],
+        marker=".", color="brown")
 
 plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=5)
 
