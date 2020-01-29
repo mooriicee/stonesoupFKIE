@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 velocity = 300.0
@@ -17,16 +19,7 @@ from stonesoup.types.groundtruth import GroundTruthPath, GroundTruthState
 
 truth = GroundTruthPath()
 
-data = []
-temp = 0
-for i in range(85):
-    data.append(temp)
-    if (i == 83):
-        temp += 3.879
-    else:
-        temp += 5
-
-for t in data:
+for t in range(math.ceil((2 * math.pi) / omega)):
     x = A * np.sin(omega * t)
     y = A * np.sin(2 * omega * t)
     truth.append(GroundTruthState(np.array([[x], [y]]), timestamp=t))
@@ -39,12 +32,13 @@ from stonesoup.types.detection import Detection
 
 measurements = []
 for state in truth:
-    xOffset = 50 * np.random.normal(0, 1, 1)
-    yOffset = 50 * np.random.normal(0, 1, 1)
-    x = state.state_vector[0, 0]
-    y = state.state_vector[1, 0]
-    measurements.append(Detection(
-        np.array([[x] + xOffset, [y] + yOffset]), timestamp=state.timestamp))
+    if state.timestamp % 5 == 0:
+        xOffset = 50 * np.random.normal(0, 1, 1)
+        yOffset = 50 * np.random.normal(0, 1, 1)
+        x = state.state_vector[0, 0]
+        y = state.state_vector[1, 0]
+        measurements.append(Detection(
+            np.array([[x] + xOffset, [y] + yOffset]), timestamp=state.timestamp))
 
 # Plot the result
 ax.scatter([state.state_vector[0, 0] for state in measurements],
