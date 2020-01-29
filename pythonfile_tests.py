@@ -33,8 +33,8 @@ from stonesoup.types.detection import Detection
 measurements = []
 for state in truth:
     if state.timestamp % 5 == 0:
-        xOffset = 200 * np.random.normal(-1, 1, 1)
-        yOffset = 200 * np.random.normal(-1, 1, 1)
+        xOffset = 50 * np.random.normal(-1, 1, 1)
+        yOffset = 50 * np.random.normal(-1, 1, 1)
         x = state.state_vector[0, 0]
         y = state.state_vector[1, 0]
         measurements.append(Detection(
