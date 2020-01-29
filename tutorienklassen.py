@@ -14,7 +14,7 @@ from stonesoup.types.update import GaussianStateUpdate
 from stonesoup.updater import Updater
 from stonesoup.predictor import Predictor
 from stonesoup.types.prediction import GaussianStatePrediction
-from stonesoup.types.state import State
+from stonesoup.types.state import State, GaussianState
 
 
 class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
@@ -121,3 +121,23 @@ class SDFUpdater(Updater):
                                    posterior_covar,
                                    hypothesis,
                                    hypothesis.measurement.timestamp)
+
+
+def retrodict(state, prior_state, transition_model):
+    F = transition_model.matrix()
+
+    x_ll = prior_state.state_vector()
+    P_ll = prior_state.covar()
+
+    x_l1k = state.state_vector()
+    P_l1k = state.covar()
+
+    x_l1l = F @ x_ll
+    P_l1l = F @ P_ll @ F.T + transition_model.covar()
+
+    W_l1l = P_ll @ F.T @ np.linalg.pinv(P_l1l)
+
+    x_lk = x_ll + W_l1l @ (x_l1k - x_l1l)
+    P_lk = P_ll + W_l1l @ (P_l1k - P_l1l) @ W_l1l.T
+
+    return GaussianState(x_lk, P_lk, timestamp=state.timestamp)
