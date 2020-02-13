@@ -136,7 +136,7 @@ def retrodict(current_state, prior_state, transition_model):
     P_l1k = current_state.covar
 
     x_l1l = F @ x_ll    # predizierter Zustand
-    P_l1l = F @ P_ll @ np.transpose(F) + D
+    P_l1l = F @ P_ll @ np.transpose(F) + 10*D
 
     W_l1l = P_ll @ np.transpose(F) @ np.linalg.pinv(P_l1l)   # Gewichtsmatrix
 
