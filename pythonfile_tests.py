@@ -30,13 +30,38 @@ ax.plot([state.state_vector[0, 0] for state in truth],
 
 from stonesoup.types.detection import Detection
 
+'''
+sensorAnzahl = 3
+from tutorienklassen import SDFMessmodell
+
+measurement_model = SDFMessmodell(
+    4,  # Number of state dimensions (position and velocity in 2D)
+    (0, 2),  # Mapping measurement vector index to state index
+'''
+
 measurements = []
 for state in truth:
     if state.timestamp % 5 == 0:
+        '''
+        mean = 0
+        sensormessungen = []
+        for i in range(sensorAnzahl):
+            xOffset = 50 * np.random.normal(-1, 1, 1)
+            yOffset = 50 * np.random.normal(-1, 1, 1)
+            x = state.state_vector[0, 0]
+            y = state.state_vector[1, 0]
+            sensormessungen.append((x, y))
+
+        for j in range(len(sensormessungen)):
+            temp = sensormessungen[i]
+            cov = np.linalg.inv(measurement_model.covar())
+            mean += cov @ state.state_vector
+        '''
         xOffset = 50 * np.random.normal(-1, 1, 1)
         yOffset = 50 * np.random.normal(-1, 1, 1)
         x = state.state_vector[0, 0]
         y = state.state_vector[1, 0]
+
         measurements.append(Detection(
             np.array([[x] + xOffset, [y] + yOffset]), timestamp=state.timestamp))
 
