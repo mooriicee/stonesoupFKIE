@@ -44,7 +44,9 @@ class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
 
     def matrix(self, timedelta=5, **kwargs):
         delta_t = timedelta
-        return sp.array([[1, delta_t, 0, 0], [0, 1, 0, 0], [0, 0, 1, delta_t], [0, 0, 0, 1]])
+        F = sp.array([[1, delta_t], [0, 1]])
+        return block_diag(F, F)
+
 
     def covar(self, timedelta=5, **kwargs):
         delta_t = timedelta
