@@ -4,6 +4,7 @@ from wave import Wave_write
 import numpy as np
 import scipy as sp
 from scipy.linalg import block_diag
+from scipy.stats import multivariate_normal
 from stonesoup.base import Property
 from stonesoup.models.base import LinearModel, GaussianModel, TimeVariantModel
 from stonesoup.models.measurement import MeasurementModel
@@ -24,21 +25,21 @@ class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
     def ndim_meas(self):
         return 2
 
+    def matrix(self, **kwargs):
+        model_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0]])
+        return model_matrix
+
     def covar(self):
-        cov = CovarianceMatrix([[np.power(50, 2), 0], [0, np.power(50, 2)]])
+        sigma = 50
+        cov = CovarianceMatrix([[np.power(sigma, 2), 0], [0, np.power(sigma, 2)]])
         return cov
 
     def rvs(self):
-        return 0.5
+        noise = multivariate_normal.rvs(sp.zeros(self.ndim_meas), self.covar(), 1)
+        return noise.reshape((-1, 1))
 
-    def pdf(self):
-        pass
-
-    def matrix(self, **kwargs):
-        model_matrix = np.array([[1, 0, 0, 0], [0, 0, 1, 0]])
-
-        return model_matrix
-
+    # def pdf(self):
+        # pass
 
 class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
 
