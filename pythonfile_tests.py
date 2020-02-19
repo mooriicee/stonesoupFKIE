@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from numpy.distutils.system_info import xft_info
 
 velocity = 300.0
 acceleration = 9.0
@@ -22,6 +23,7 @@ truth = GroundTruthPath()
 for t in range(math.ceil((2 * math.pi) / omega)):
     x = A * np.sin(omega * t)
     y = A * np.sin(2 * omega * t)
+
     truth.append(GroundTruthState(np.array([[x], [y]]), timestamp=t))
 
 ax.plot([state.state_vector[0, 0] for state in truth],
@@ -38,6 +40,8 @@ measurement_model = SDFMessmodell(
     4,  # Number of state dimensions (position and velocity in 2D)
     (0, 2),  # Mapping measurement vector index to state index
 '''
+
+x_Offsets = []
 
 measurements = []
 for state in truth:
@@ -57,13 +61,21 @@ for state in truth:
             cov = np.linalg.inv(measurement_model.covar())
             mean += cov @ state.state_vector
         '''
-        xOffset = 50 * np.random.normal(-1, 1, 1)
-        yOffset = 50 * np.random.normal(-1, 1, 1)
+        # xOffset = 50 * np.random.normal(-1, 1, 1)
+        # yOffset = 50 * np.random.normal(-1, 1, 1)
         x = state.state_vector[0, 0]
         y = state.state_vector[1, 0]
 
-        measurements.append(Detection(
-            np.array([[x] + xOffset, [y] + yOffset]), timestamp=state.timestamp))
+        mean = [x, y]
+        cov = [[2500, 0], [0, 2500]]
+        xDet, yDet = np.random.multivariate_normal(mean, cov)
+
+        x_Offsets.append(xDet - x)
+
+        measurements.append(Detection(np.array([[xDet], [yDet]]), timestamp=state.timestamp))
+
+        # measurements.append(Detection(
+        #    np.array([[x] + xOffset, [y] + yOffset]), timestamp=state.timestamp))
 
 # Plot the result
 ax.scatter([state.state_vector[0, 0] for state in measurements],
@@ -97,7 +109,7 @@ updater = SDFUpdater(measurement_model)
 
 from stonesoup.types.state import GaussianState
 
-prior = GaussianState([[0.0], [1.0], [0.0], [1.0]], np.diag([0.0, 0.0, 0.0, 0.0]), timestamp=0)
+prior = GaussianState([[0.0], [50.0], [0.0], [50.0]], np.diag([0.0, 0.0, 0.0, 0.0]), timestamp=0)
 
 from stonesoup.types.hypothesis import SingleHypothesis
 from stonesoup.types.track import Track
