@@ -38,8 +38,8 @@ class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
         noise = multivariate_normal.rvs(sp.zeros(self.ndim_meas), self.covar(), 1)
         return noise.reshape((-1, 1))
 
-    # def pdf(self):
-        # pass
+    def pdf(self):
+        pass
 
 class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
 
