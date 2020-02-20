@@ -78,7 +78,7 @@ class SdfKalmanPredictor(Predictor):
         return GaussianStatePrediction(prediction_mean, prediction_covar)
 
 
-class SDFUpdater(Updater):
+'''class SDFUpdater(Updater):
     messprediction = None  # mess-mean
     S = None  # messkovarianz
     Pxy = None
@@ -119,6 +119,43 @@ class SDFUpdater(Updater):
                                           meas_pred_mean, meas_pred_covar,
                                           hypothesis.prediction.timestamp,
                                           cross_covar)
+                                      )
+
+        return GaussianStateUpdate(posterior_mean,
+                                   posterior_covar,
+                                   hypothesis,
+                                   hypothesis.measurement.timestamp)'''
+
+
+class SDFUpdater(Updater):
+    def get_measurement_prediction(self, state_prediction, measurement_model=None, **kwargs):
+        pass
+
+    def update(self, hypothesis, measurementmodel, **kwargs):
+        measurement_matrix = measurementmodel.matrix()  # H
+        measurement_noise_covar = measurementmodel.covar()  # R
+        prediction_covar = hypothesis.prediction.covar  # P
+        messprediction = measurement_matrix @ hypothesis.prediction.mean  # H @ x
+
+        S = measurement_matrix @ prediction_covar @ measurement_matrix.T + measurement_noise_covar  # S
+        W = prediction_covar @ measurement_matrix.T @ np.linalg.pinv(S)  # W
+        Innovation = hypothesis.measurement.state_vector - (measurement_matrix @ hypothesis.prediction.mean)  # v
+
+        x_post = hypothesis.prediction.mean + W @ Innovation  # x + W @ v
+        P_post = prediction_covar - (W @ S @ W.T)  # P - ( W @ S @ W.T )
+        # P_post = (P_post + P_post.T) / 2
+
+        posterior_mean = x_post
+        posterior_covar = P_post
+        meas_pred_mean = messprediction
+        meas_pred_covar = S
+
+        # Augment hypothesis with measurement prediction
+        hypothesis = SingleHypothesis(hypothesis.prediction,
+                                      hypothesis.measurement,
+                                      GaussianMeasurementPrediction(
+                                          meas_pred_mean, meas_pred_covar,
+                                          hypothesis.prediction.timestamp)
                                       )
 
         return GaussianStateUpdate(posterior_mean,
