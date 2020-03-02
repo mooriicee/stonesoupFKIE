@@ -1,7 +1,6 @@
 import math
 
 import numpy as np
-from numpy.distutils.system_info import xft_info
 
 velocity = 300.0
 acceleration = 9.0
@@ -89,9 +88,14 @@ transition_model = PCWAModel()
 transition_model.matrix()
 transition_model.covar()
 
+
+
 from tutorienklassen import SdfKalmanPredictor
 
 predictor = SdfKalmanPredictor(transition_model)
+
+
+
 
 from tutorienklassen import SDFMessmodell
 
@@ -100,8 +104,12 @@ measurement_model = SDFMessmodell(
     (0, 2),  # Mapping measurement vector index to state index
 )
 
+
 measurement_model.matrix()
 measurement_model.covar()
+
+
+
 
 from tutorienklassen import SDFUpdater
 

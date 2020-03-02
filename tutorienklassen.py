@@ -1,11 +1,9 @@
 from functools import lru_cache
-from wave import Wave_write
 
 import numpy as np
 import scipy as sp
 from scipy.linalg import block_diag
 from scipy.stats import multivariate_normal
-from stonesoup.base import Property
 from stonesoup.models.base import LinearModel, GaussianModel, TimeVariantModel
 from stonesoup.models.measurement import MeasurementModel
 from stonesoup.models.transition.linear import LinearGaussianTransitionModel
@@ -16,7 +14,7 @@ from stonesoup.types.update import GaussianStateUpdate
 from stonesoup.updater import Updater
 from stonesoup.predictor import Predictor
 from stonesoup.types.prediction import GaussianStatePrediction
-from stonesoup.types.state import State, GaussianState
+from stonesoup.types.state import GaussianState
 
 
 class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
