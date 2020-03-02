@@ -94,7 +94,6 @@ class SDFUpdater(Updater):
 
         x_post = hypothesis.prediction.mean + W @ Innovation  # x + W @ v
         P_post = prediction_covar - (W @ S @ W.T)  # P - ( W @ S @ W.T )
-        # P_post = (P_post + P_post.T) / 2
 
         posterior_mean = x_post
         posterior_covar = P_post
