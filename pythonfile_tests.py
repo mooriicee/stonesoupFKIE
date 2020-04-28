@@ -117,7 +117,7 @@ updater = SDFUpdater(measurement_model)
 
 from stonesoup.types.state import GaussianState
 
-prior = GaussianState([[0.0], [50.0], [0.0], [50.0]], np.diag([0.0, 0.0, 0.0, 0.0]), timestamp=0)
+prior = GaussianState([[0.0], [0.0], [0.0], [0.0]], np.diag([0.0, 0.0, 0.0, 0.0]), timestamp=0)
 
 from stonesoup.types.hypothesis import SingleHypothesis
 from stonesoup.types.track import Track
