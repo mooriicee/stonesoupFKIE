@@ -33,7 +33,7 @@ class SDFMessmodell(MeasurementModel, LinearModel, GaussianModel):
         return cov
 
     def rvs(self):
-        noise = multivariate_normal.rvs(sp.zeros(self.ndim_meas), self.covar(), 1)
+        noise = multivariate_normal.rvs(np.zeros(self.ndim_meas), self.covar(), 1)
         return noise.reshape((-1, 1))
 
     def pdf(self):
@@ -43,7 +43,7 @@ class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
 
     def matrix(self, timedelta=5, **kwargs):
         delta_t = timedelta
-        F = sp.array([[1, delta_t], [0, 1]])
+        F = np.array([[1, delta_t], [0, 1]])
         return block_diag(F, F)
 
 
@@ -51,10 +51,10 @@ class PCWAModel(LinearGaussianTransitionModel, TimeVariantModel):
         delta_t = timedelta
         Sigma = 5.0
 
-        covar = sp.array([[sp.power(delta_t, 4) / 4,
-                           sp.power(delta_t, 3) / 2],
-                          [sp.power(delta_t, 3) / 2,
-                           sp.power(delta_t, 2)]]) * sp.power(Sigma, 2)
+        covar = np.array([[np.power(delta_t, 4) / 4,
+                           np.power(delta_t, 3) / 2],
+                          [np.power(delta_t, 3) / 2,
+                           np.power(delta_t, 2)]]) * np.power(Sigma, 2)
 
         covar = block_diag(covar, covar)
 

@@ -123,8 +123,10 @@ from stonesoup.types.hypothesis import SingleHypothesis
 from stonesoup.types.track import Track
 
 track = Track()
+predictions = []
 for measurement in measurements:
     prediction = predictor.predict(prior, timestamp=measurement.timestamp)
+    predictions.append((prediction.state_vector[0, 0], prediction.state_vector[2, 0]))
 
     hypothesis = SingleHypothesis(prediction, measurement)  # Used to group a prediction and measurement together
 
@@ -135,11 +137,10 @@ for measurement in measurements:
     prior = track[-1]
 
 # Plot the resulting track
-ax.plot([state.state_vector[0, 0] for state in track],
-        [state.state_vector[2, 0] for state in track],
+ax.plot([state.state_vector[0] for state in track],
+        [state.state_vector[2] for state in track],
         marker=".", color="yellow")
 
-# %%
 
 from matplotlib.patches import Ellipse
 

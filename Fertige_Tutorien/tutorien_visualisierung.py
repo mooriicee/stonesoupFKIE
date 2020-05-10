@@ -20,13 +20,18 @@ from matplotlib import pyplot as plt
 
 '''
 
-Hier nach jedem Tutorium die erstellten Klassen einfügen
+
+Hier nach jedem Tutorium die erstellten Klassen und Funktionen einfügen
 
 
 '''
 
+
 '''
-Hier den Inhalt aus Tutorium 1 einfügen
+
+Hier den Inhalt aus Tutorium 1 einfügen.
+Nach jedem Tutorium müssen einzelne Codeabschnitte hinzugefügt werden um die benötigten Komponenten zu erstellen.
+Wie das geht wird während der Globalübung gezeigt.
 
 '''
 
