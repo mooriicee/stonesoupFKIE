@@ -35,4 +35,9 @@ Wie das geht wird während der Globalübung gezeigt.
 
 '''
 
+transition_model = PCWAModel()
+
+predictor = SdfKalmanPredictor(transition_model)
+
+
 plt.show()
