@@ -78,13 +78,17 @@ class SdfKalmanPredictor(Predictor):
 
 class SDFUpdater(Updater):
     def get_measurement_prediction(self, state_prediction, measurement_model=None, **kwargs):
-        pass
+        x_pre = state_prediction
+        Messmatrix = measurement_model.matrix()
+        messprediction = Messmatrix @ x_pre
+        return messprediction
 
     def update(self, hypothesis, measurementmodel, **kwargs):
         measurement_matrix = measurementmodel.matrix()  # H
         measurement_noise_covar = measurementmodel.covar()  # R
         prediction_covar = hypothesis.prediction.covar  # P
-        messprediction = measurement_matrix @ hypothesis.prediction.mean  # H @ x
+        # messprediction = measurement_matrix @ hypothesis.prediction.mean # H @ x
+        messprediction = self.get_measurement_prediction(hypothesis.prediction.mean, measurementmodel)
 
         S = measurement_matrix @ prediction_covar @ measurement_matrix.T + measurement_noise_covar  # S
         W = prediction_covar @ measurement_matrix.T @ np.linalg.pinv(S)  # W
@@ -93,21 +97,16 @@ class SDFUpdater(Updater):
         x_post = hypothesis.prediction.mean + W @ Innovation  # x + W @ v
         P_post = prediction_covar - (W @ S @ W.T)  # P - ( W @ S @ W.T )
 
-        posterior_mean = x_post
-        posterior_covar = P_post
-        meas_pred_mean = messprediction
-        meas_pred_covar = S
-
         # Augment hypothesis with measurement prediction
         hypothesis = SingleHypothesis(hypothesis.prediction,
                                       hypothesis.measurement,
                                       GaussianMeasurementPrediction(
-                                          meas_pred_mean, meas_pred_covar,
+                                          messprediction, S,
                                           hypothesis.prediction.timestamp)
                                       )
 
-        return GaussianStateUpdate(posterior_mean,
-                                   posterior_covar,
+        return GaussianStateUpdate(x_post,
+                                   P_post,
                                    hypothesis,
                                    hypothesis.measurement.timestamp)
 

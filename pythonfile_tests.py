@@ -123,12 +123,11 @@ from stonesoup.types.hypothesis import SingleHypothesis
 from stonesoup.types.track import Track
 
 track = Track()
-predictions = []
+
 for measurement in measurements:
     prediction = predictor.predict(prior, timestamp=measurement.timestamp)
-    predictions.append((prediction.state_vector[0, 0], prediction.state_vector[2, 0]))
 
-    hypothesis = SingleHypothesis(prediction, measurement)  # Used to group a prediction and measurement together
+    hypothesis = SingleHypothesis(prediction, measurement)
 
     post = updater.update(hypothesis, measurement_model)
 
@@ -167,6 +166,7 @@ ax.plot([state.state_vector[0, 0] for state in retrodiction_track],
         [state.state_vector[2, 0] for state in retrodiction_track],
         marker=".", color="brown")
 
+"""
 for state in retrodiction_track:
     w, v = np.linalg.eig(measurement_model.matrix() @ state.covar @ measurement_model.matrix().T)
     max_ind = np.argmax(v[0, :])
@@ -175,7 +175,7 @@ for state in retrodiction_track:
                       width=np.sqrt(w[0]) * 2, height=np.sqrt(w[1]) * 2,
                       angle=np.rad2deg(orient),
                       alpha=0.2)
-    ax.add_artist(ellipse)
+    ax.add_artist(ellipse)"""
 
 plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True, shadow=True, ncol=5)
 
